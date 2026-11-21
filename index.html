@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedGuard - Smart Medicine Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <h1>MedGuard</h1>
+        <p>Home Medicine Expiry & Safety Tracker</p>
+    </header>
+
+    <main class="main-box">
+        <!-- Left Side: Form -->
+        <section class="card">
+            <h2>Add New Medicine</h2>
+            
+            <label for="medName">Medicine Name</label>
+            <input type="text" id="medName" placeholder="e.g. Paracetamol 500mg">
+
+            <label for="batchCode">Batch Number</label>
+            <input type="text" id="batchCode" placeholder="e.g. BATCH99">
+
+            <label for="expDate">Expiry Date</label>
+            <input type="date" id="expDate">
+
+            <label for="doseTime">Dosage Timing</label>
+            <select id="doseTime">
+                <option value="After Meal">After Meal (Khana Khane Ke Baad)</option>
+                <option value="Before Breakfast">Before Breakfast (Khali Pet)</option>
+                <option value="At Night">At Night (Sone Se Pehle)</option>
+            </select>
+
+            <button id="addBtn" class="primary-btn">Check & Save Medicine</button>
+        </section>
+
+        <!-- Right Side: Dashboard -->
+        <section class="card">
+            <div class="top-bar">
+                <h2>Saved Medicines</h2>
+                <button id="sosBtn" class="sos-btn">Emergency Helpline</button>
+            </div>
+
+            <div class="counter-row">
+                <div class="box green-box">Safe: <span id="safeCount">0</span></div>
+                <div class="box yellow-box">Expiring Soon: <span id="warnCount">0</span></div>
+                <div class="box red-box">Expired: <span id="expCount">0</span></div>
+            </div>
+
+            <div id="medContainer"></div>
+        </section>
+    </main>
+
+    <!-- Emergency Popup -->
+    <div id="sosPopup" class="popup-bg hidden">
+        <div class="popup-card">
+            <h3>Emergency Medical Numbers</h3>
+            <p>Ambulance: <strong>102 / 108</strong></p>
+            <p>National Health Helpline: <strong>1800-180-1104</strong></p>
+            <p id="gpsText">Fetching location...</p>
+            <button id="closePopup" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
