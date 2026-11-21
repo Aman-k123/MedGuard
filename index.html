@@ -3,20 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedGuard - Smart Medicine Tracker</title>
+    <title>MedGuard Pro - Smart Medicine Safety</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header class="navbar">
-        <h1>MedGuard</h1>
-        <p>Home Medicine Expiry & Safety Tracker</p>
+        <h1>🩺 MedGuard Pro</h1>
+        <p>Smart Medicine Scanner, Expiry & Interaction Safety System</p>
     </header>
 
     <main class="main-box">
-        <!-- Left Side: Form -->
+        <!-- Left Side: Camera Scanner & Form -->
         <section class="card">
-            <h2>Add New Medicine</h2>
+            <h2>1. Scan or Add Medicine</h2>
+
+            <!-- Live Camera Scanner Box -->
+            <div class="scanner-box">
+                <video id="cameraFeed" autoplay playsinline class="hidden"></video>
+                <div class="cam-btns">
+                    <button id="startCamBtn" class="cam-btn">📷 Open Strip Scanner</button>
+                    <button id="scanNowBtn" class="scan-btn hidden">⚡ Scan Strip Now</button>
+                </div>
+                <p id="scanStatus" class="scan-text">Point camera at medicine strip to auto-fill</p>
+            </div>
             
             <label for="medName">Medicine Name</label>
             <input type="text" id="medName" placeholder="e.g. Paracetamol 500mg">
@@ -34,16 +44,20 @@
                 <option value="At Night">At Night (Sone Se Pehle)</option>
             </select>
 
-            <button id="addBtn" class="primary-btn">Check & Save Medicine</button>
+            <button id="addBtn" class="primary-btn">Check Safety & Save</button>
         </section>
 
-        <!-- Right Side: Dashboard -->
+        <!-- Right Side: Smart Dashboard -->
         <section class="card">
             <div class="top-bar">
-                <h2>Saved Medicines</h2>
-                <button id="sosBtn" class="sos-btn">Emergency Helpline</button>
+                <h2>2. Medicine Safety Dashboard</h2>
+                <button id="sosBtn" class="sos-btn">🚨 SOS Helpline</button>
             </div>
 
+            <!-- Drug Interaction Warning Banner -->
+            <div id="interactionAlert" class="interaction-box hidden"></div>
+
+            <!-- Counters -->
             <div class="counter-row">
                 <div class="box green-box">Safe: <span id="safeCount">0</span></div>
                 <div class="box yellow-box">Expiring Soon: <span id="warnCount">0</span></div>
@@ -57,10 +71,10 @@
     <!-- Emergency Popup -->
     <div id="sosPopup" class="popup-bg hidden">
         <div class="popup-card">
-            <h3>Emergency Medical Numbers</h3>
+            <h3>🚨 Emergency Medical Numbers</h3>
             <p>Ambulance: <strong>102 / 108</strong></p>
             <p>National Health Helpline: <strong>1800-180-1104</strong></p>
-            <p id="gpsText">Fetching location...</p>
+            <p id="gpsText">Fetching live GPS location...</p>
             <button id="closePopup" class="close-btn">Close</button>
         </div>
     </div>

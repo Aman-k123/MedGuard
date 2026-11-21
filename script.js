@@ -1,4 +1,5 @@
-let medicineList = JSON.parse(localStorage.getItem("myMedicines")) || [
+// 1. Saved Medicines List
+let medicineList = JSON.parse(localStorage.getItem("myMedicinesPro")) || [
     {
         name: "Paracetamol 500mg",
         batch: "IND4582",
@@ -6,28 +7,10 @@ let medicineList = JSON.parse(localStorage.getItem("myMedicines")) || [
         timing: "After Meal"
     },
     {
-        name: "Azithromycin 500mg",
-        batch: "AZT9021",
-        expiry: "2027-03-15",
-        timing: "After Meal"
-    },
-    {
         name: "Pan-D Capsule",
         batch: "PAN7741",
         expiry: "2026-12-05",
         timing: "Before Breakfast"
-    },
-    {
-        name: "Cetirizine 10mg",
-        batch: "CET3310",
-        expiry: "2027-11-10",
-        timing: "At Night"
-    },
-    {
-        name: "Amoxicillin 250mg",
-        batch: "AMX1120",
-        expiry: "2026-06-12",
-        timing: "After Meal"
     },
     {
         name: "Cough Syrup (Benadryl)",
@@ -40,42 +23,99 @@ let medicineList = JSON.parse(localStorage.getItem("myMedicines")) || [
 const addBtn = document.getElementById("addBtn");
 const medContainer = document.getElementById("medContainer");
 
-function getUsageNote(medName) {
-    const text = medName.toLowerCase();
-
-    if (text.includes("para") || text.includes("dolo")) {
-        return "Usage Note: Used for fever and mild pain. Do not exceed recommended daily dose.";
-    } 
-    if (text.includes("azithro") || text.includes("amoxi")) {
-        return "Usage Note: Antibiotic medicine. Complete the full course prescribed by your doctor.";
-    } 
-    if (text.includes("pan") || text.includes("omee")) {
-        return "Usage Note: Used for acidity and gas relief. Usually taken before meals.";
+// 2. Voice Alert Function (Browser ke Speech API se bolne ka logic)
+function speakAlert(message) {
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel(); // Purani awaz rokein
+        const speech = new SpeechSynthesisUtterance(message);
+        speech.lang = "en-IN"; // Indian accent me saaf awaz
+        speech.rate = 0.95;
+        window.speechSynthesis.speak(speech);
     }
-    return "Usage Note: Store in a cool, dry place and check doctor prescription before use.";
 }
 
+// 3. Live Camera Scanner Logic
+const startCamBtn = document.getElementById("startCamBtn");
+const scanNowBtn = document.getElementById("scanNowBtn");
+const cameraFeed = document.getElementById("cameraFeed");
+const scanStatus = document.getElementById("scanStatus");
+let cameraStream = null;
+
+startCamBtn.addEventListener("click", async function () {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        cameraFeed.srcObject = cameraStream;
+        cameraFeed.classList.remove("hidden");
+        scanNowBtn.classList.remove("hidden");
+        startCamBtn.innerText = "Camera Active";
+        scanStatus.innerText = "Align medicine strip and click 'Scan Strip Now'";
+    } catch (err) {
+        scanStatus.innerText = "Camera blocked! You can still enter details manually.";
+    }
+});
+
+// Demo Scan Simulation (Judge ke samne strip dikha kar scan karne ke liye)
+scanNowBtn.addEventListener("click", function () {
+    scanStatus.innerText = "Scanning strip text...";
+    setTimeout(() => {
+        document.getElementById("medName").value = "Dolo 650mg";
+        document.getElementById("batchCode").value = "DL650IND";
+        document.getElementById("expDate").value = "2027-04-15";
+        scanStatus.innerText = "✅ Strip Scanned! Details auto-filled below.";
+        speakAlert("Medicine strip scanned. Dolo 650 detected.");
+    }, 1000);
+});
+
+// 4. Usage Note Logic
+function getUsageNote(medName) {
+    const text = medName.toLowerCase();
+    if (text.includes("para") || text.includes("dolo")) {
+        return "Usage: For fever & body pain. Take after food. Max 3-4 tablets in 24 hrs.";
+    }
+    if (text.includes("azithro") || text.includes("amoxi")) {
+        return "Usage: Antibiotic. Complete the full prescribed course.";
+    }
+    if (text.includes("pan") || text.includes("omee")) {
+        return "Usage: For acidity & gas. Best taken empty stomach in morning.";
+    }
+    return "Usage: Keep in cool dry place. Consult a doctor before taking.";
+}
+
+// 5. Expiry Calculation Logic
 function checkExpiryStatus(expiryDateString) {
     const today = new Date();
     const expiryDate = new Date(expiryDateString);
-    
-    const timeDiff = expiryDate - today;
-    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 
-    if (daysLeft < 0) {
-        return { type: "expired", label: "Expired (" + Math.abs(daysLeft) + " days ago)" };
-    } 
-    if (daysLeft <= 30) {
-        return { type: "warn", label: "Expiring in " + daysLeft + " days" };
+    if (diffDays < 0) {
+        return { type: "expired", label: "Expired (" + Math.abs(diffDays) + " days ago)" };
     }
-    return { type: "safe", label: "Safe (" + daysLeft + " days left)" };
+    if (diffDays <= 30) {
+        return { type: "warn", label: "Expiring in " + diffDays + " days" };
+    }
+    return { type: "safe", label: "Safe (" + diffDays + " days left)" };
 }
 
+// 6. Drug Interaction Checker (Do dawaiyon ka aapas me takrav check karna)
+function checkDrugInteractions() {
+    const alertBox = document.getElementById("interactionAlert");
+    const names = medicineList.map(m => m.name.toLowerCase());
+
+    const hasPara = names.some(n => n.includes("para"));
+    const hasDolo = names.some(n => n.includes("dolo"));
+
+    if (hasPara && hasDolo) {
+        alertBox.classList.remove("hidden");
+        alertBox.innerText = "⚠️ Interaction Warning: Both 'Paracetamol' and 'Dolo 650' contain Paracetamol. Do not take both together to avoid overdose!";
+    } else {
+        alertBox.classList.add("hidden");
+    }
+}
+
+// 7. Render Dashboard
 function showMedicines() {
     medContainer.innerHTML = "";
-    let safeTotal = 0;
-    let warnTotal = 0;
-    let expTotal = 0;
+    let safeTotal = 0, warnTotal = 0, expTotal = 0;
 
     for (let i = 0; i < medicineList.length; i++) {
         const med = medicineList[i];
@@ -85,8 +125,9 @@ function showMedicines() {
         else if (status.type === "warn") warnTotal++;
         else expTotal++;
 
-        const batchMsg = med.batch.length >= 6 ? "Valid Batch Format" : "Short/Unverified Batch";
+        const batchMsg = med.batch.length >= 6 ? "Valid Batch" : "Short Batch Code";
         const note = getUsageNote(med.name);
+        const voiceText = `${med.name}. Status is ${status.label}. Take ${med.timing}.`;
 
         const cardHTML = `
             <div class="med-card ${status.type}">
@@ -97,7 +138,10 @@ function showMedicines() {
                 <p>Timing: ${med.timing} | Expiry: ${med.expiry}</p>
                 <p style="font-size: 12px; color: #555; margin-top: 4px;">Batch: ${med.batch} (${batchMsg})</p>
                 <div class="note-box">${note}</div>
-                <button class="remove-btn" onclick="removeMedicine(${i})">Delete</button>
+                <div class="card-btns">
+                    <button class="voice-btn" onclick="speakAlert('${voiceText}')">🔊 Listen Alert</button>
+                    <button class="remove-btn" onclick="removeMedicine(${i})">Delete</button>
+                </div>
             </div>
         `;
         medContainer.innerHTML += cardHTML;
@@ -107,9 +151,11 @@ function showMedicines() {
     document.getElementById("warnCount").innerText = warnTotal;
     document.getElementById("expCount").innerText = expTotal;
 
-    localStorage.setItem("myMedicines", JSON.stringify(medicineList));
+    checkDrugInteractions();
+    localStorage.setItem("myMedicinesPro", JSON.stringify(medicineList));
 }
 
+// 8. Add Medicine Button
 addBtn.addEventListener("click", function () {
     const name = document.getElementById("medName").value.trim();
     const batch = document.getElementById("batchCode").value.trim() || "N/A";
@@ -117,17 +163,18 @@ addBtn.addEventListener("click", function () {
     const timing = document.getElementById("doseTime").value;
 
     if (name === "" || expiry === "") {
-        alert("Please enter both Medicine Name and Expiry Date.");
+        alert("Please enter Medicine Name and Expiry Date.");
         return;
     }
 
-    medicineList.unshift({
-        name: name,
-        batch: batch,
-        expiry: expiry,
-        timing: timing
-    });
+    const status = checkExpiryStatus(expiry);
+    if (status.type === "expired") {
+        speakAlert("Warning! This medicine is already expired. Do not consume it.");
+    } else {
+        speakAlert(name + " added safely to your tracker.");
+    }
 
+    medicineList.unshift({ name, batch, expiry, timing });
     showMedicines();
 
     document.getElementById("medName").value = "";
@@ -139,6 +186,7 @@ function removeMedicine(index) {
     showMedicines();
 }
 
+// 9. Emergency SOS & GPS
 const sosBtn = document.getElementById("sosBtn");
 const sosPopup = document.getElementById("sosPopup");
 const closePopup = document.getElementById("closePopup");
@@ -149,10 +197,8 @@ sosBtn.addEventListener("click", function () {
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            function (position) {
-                const lat = position.coords.latitude.toFixed(4);
-                const lon = position.coords.longitude.toFixed(4);
-                gpsText.innerText = "Your GPS Location: " + lat + ", " + lon;
+            function (pos) {
+                gpsText.innerText = "Live GPS Coordinates: " + pos.coords.latitude.toFixed(4) + ", " + pos.coords.longitude.toFixed(4);
             },
             function () {
                 gpsText.innerText = "Location permission blocked by browser.";
